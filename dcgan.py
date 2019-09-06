@@ -17,6 +17,7 @@ python3 dcgan.py --mode generate --batch_size <batch_size> --nice : top 5% image
 python3 dcgan.py --mode generate --batch_size 128
 '''
 
+import keras
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Reshape
@@ -33,6 +34,8 @@ from PIL import Image
 import argparse
 import math
 import os
+
+import tensorflow as tf
 
 N_EPOCH=100
 
@@ -155,11 +158,11 @@ def train(BATCH_SIZE):
 def generate(BATCH_SIZE, nice=False):
     g = generator_model()
     g.compile(loss='binary_crossentropy', optimizer="SGD")
-    g.load_weights('generator')
+    g.load_weights('generator_dcgan.h5')
     if nice:
         d = discriminator_model()
         d.compile(loss='binary_crossentropy', optimizer="SGD")
-        d.load_weights('discriminator')
+        d.load_weights('discriminator_dcgan.h5')
         noise = np.random.uniform(-1, 1, (BATCH_SIZE*20, 100))
         generated_images = g.predict(noise, verbose=1)
         d_pret = d.predict(generated_images, verbose=1)
@@ -193,6 +196,10 @@ def get_args():
 
 if __name__ == "__main__":
     args = get_args()
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 0.8
+    keras.backend.tensorflow_backend.set_session(tf.Session(config=config))
+    
     if args.mode == "train":
         try:
             os.makedirs('./dcgan/')
