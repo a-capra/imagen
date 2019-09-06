@@ -7,7 +7,7 @@ def moving_average(a, n=3) :
     return ret[n - 1:] / n
 
 sample_size=50
-x = np.arange(sample_size-1,15000)
+x = np.arange(sample_size-1,50000)
 d = np.loadtxt('dlosses.txt', dtype=float)
 g = np.loadtxt('glosses.txt', dtype=float)
 plt.plot(x,moving_average(d,sample_size),'r.',label='discriminator')
