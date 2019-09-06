@@ -1,17 +1,20 @@
 '''
+from:
+https://github.com/jacobgil/keras-dcgan.git
+
 Training:
 
-python dcgan.py --mode train --batch_size <batch_size>
+python3 dcgan.py --mode train --batch_size <batch_size>
 
-python dcgan.py --mode train --path ~/images --batch_size 128
+python3 dcgan.py --mode train --path ~/images --batch_size 128
 
 Image generation:
 
-python dcgan.py --mode generate --batch_size <batch_size>
+python3 dcgan.py --mode generate --batch_size <batch_size>
 
-python dcgan.py --mode generate --batch_size <batch_size> --nice : top 5% images according to discriminator
+python3 dcgan.py --mode generate --batch_size <batch_size> --nice : top 5% images according to discriminator
 
-python dcgan.py --mode generate --batch_size 128
+python3 dcgan.py --mode generate --batch_size 128
 '''
 
 from keras.models import Sequential
@@ -23,14 +26,15 @@ from keras.layers.convolutional import UpSampling2D
 from keras.layers.convolutional import Conv2D, MaxPooling2D
 from keras.layers.core import Flatten
 from keras.optimizers import SGD
-#from keras.datasets import mnist
-from keras.datasets import cifar10
+from keras.datasets import mnist
+#from keras.datasets import cifar10
 import numpy as np
 from PIL import Image
 import argparse
 import math
+import os
 
-N_EPOCH=10
+N_EPOCH=100
 
 
 def generator_model():
@@ -94,11 +98,13 @@ def combine_images(generated_images):
 
 
 def train(BATCH_SIZE):
-    (X_train, y_train), (X_test, y_test) = cifar10.load_data()
+    #(X_train, y_train), (X_test, y_test) = cifar10.load_data()
+    (X_train, y_train), (X_test, y_test) = mnist.load_data()
     X_train = (X_train.astype(np.float32) - 127.5)/127.5
     X_train = X_train[:, :, :, None]
     X_test = X_test[:, :, :, None]
     # X_train = X_train.reshape((X_train.shape, 1) + X_train.shape[1:])
+    
     d = discriminator_model()
     g = generator_model()
     d_on_g = generator_containing_discriminator(g, d)
@@ -108,6 +114,18 @@ def train(BATCH_SIZE):
     d_on_g.compile(loss='binary_crossentropy', optimizer=g_optim)
     d.trainable = True
     d.compile(loss='binary_crossentropy', optimizer=d_optim)
+
+    # serialize model to JSON
+    model_json = d.to_json()
+    with open("discriminator_dcgan_model.json", "w") as json_file:
+        json_file.write(model_json)
+    model_json = g.to_json()
+    with open("generator_dcgan_model.json", "w") as json_file:
+        json_file.write(model_json)
+    model_json = d_on_g.to_json()
+    with open("generator_containing_discriminator_dcgan_model.json", "w") as json_file:
+        json_file.write(model_json)
+        
     for epoch in range(N_EPOCH):
         print("Epoch is", epoch)
         print("Number of batches", int(X_train.shape[0]/BATCH_SIZE))
@@ -118,7 +136,7 @@ def train(BATCH_SIZE):
             if index % 20 == 0:
                 image = combine_images(generated_images)
                 image = image*127.5+127.5
-                Image.fromarray(image.astype(np.uint8)).save(
+                Image.fromarray(image.astype(np.uint8)).save("./dcgan/"+
                     str(epoch)+"_"+str(index)+".png")
             X = np.concatenate((image_batch, generated_images))
             y = [1] * BATCH_SIZE + [0] * BATCH_SIZE
@@ -130,8 +148,8 @@ def train(BATCH_SIZE):
             d.trainable = True
             print("batch %d g_loss : %f" % (index, g_loss))
             if index % 10 == 9:
-                g.save_weights('generator', True)
-                d.save_weights('discriminator', True)
+                g.save_weights('generator_dcgan.h5', True)
+                d.save_weights('discriminator_dcgan.h5', True)
 
 
 def generate(BATCH_SIZE, nice=False):
@@ -176,6 +194,10 @@ def get_args():
 if __name__ == "__main__":
     args = get_args()
     if args.mode == "train":
+        try:
+            os.makedirs('./dcgan/')
+        except OSError:
+            pass
         train(BATCH_SIZE=args.batch_size)
     elif args.mode == "generate":
         generate(BATCH_SIZE=args.batch_size, nice=args.nice)
