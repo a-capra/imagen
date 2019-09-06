@@ -4,7 +4,7 @@ https://www.geeksforgeeks.org/building-a-generative-adversarial-network-using-ke
 '''
 import numpy as np 
 import matplotlib.pyplot as plt 
-import keras 
+import keras
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout 
 from keras.layers import BatchNormalization, Activation, ZeroPadding2D 
 from keras.layers.advanced_activations import LeakyReLU 
@@ -12,6 +12,9 @@ from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Sequential, Model 
 from keras.optimizers import Adam,SGD 
 from keras.utils.vis_utils import plot_model
+
+import tensorflow as tf
+
 
 def build_generator(): 
     model = Sequential() 
@@ -81,13 +84,20 @@ def display_images(epoch,generated_images):
 
 
 if __name__=='__main__':
+
+    
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 0.8
+    keras.backend.tensorflow_backend.set_session(tf.Session(config=config))
+    
+    
     #Loading the CIFAR10 data 
     (X, y), (_, _) = keras.datasets.cifar10.load_data() 
     #Selecting a single class images 
     #The number was randomly chosen and any number 
     #between 1 to 10 can be chosen
     category=8
-    print('choose a category')
+    print('choose a category',category)
     X = X[y.flatten() == category] 
     #Defining the Input shape
     image_shape = (32, 32, 3) 
@@ -137,9 +147,9 @@ if __name__=='__main__':
     ################################################################################
     ##### Train the network ######
     ################################################################################
-    num_epochs=15000
+    num_epochs=50000
     batch_size=32
-    display_interval=1000
+    display_interval=5000
     dlosses=[]
     glosses=[]
     #Normalize the input 
@@ -176,7 +186,7 @@ if __name__=='__main__':
         #print('GeneratorLoss',genr_loss)
         glosses.append(genr_loss)
 
-        if epoch%100==0:
+        if epoch%1000==0:
             print('Epoch:',epoch,'DiscriminatorLoss:',discm_loss[0],'GeneratorLoss:',genr_loss)
 
         # racking the progress				 
