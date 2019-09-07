@@ -96,7 +96,8 @@ if __name__=='__main__':
     #Selecting a single class images 
     #The number was randomly chosen and any number 
     #between 1 to 10 can be chosen
-    category=8
+    #category=8 # 8 is boats
+    category=3 # 3 is cats
     print('choose a category',category)
     X = X[y.flatten() == category] 
     #Defining the Input shape
@@ -147,7 +148,7 @@ if __name__=='__main__':
     ################################################################################
     ##### Train the network ######
     ################################################################################
-    num_epochs=50000
+    num_epochs=100000
     batch_size=32
     display_interval=5000
     dlosses=[]
@@ -198,9 +199,11 @@ if __name__=='__main__':
     #discriminator.save_weights('discriminator_geekGAN.h5', True)
     combined_network.save_weights('combined_geekGAN.h5')
     discriminator.save_weights('discriminator_geekGAN.h5')
+    generator.save_weights('generator_geekGAN.h5')
     np.savetxt('dlosses.txt', dlosses, fmt='%f')
     np.savetxt('glosses.txt', glosses, fmt='%f')
 
+    '''
     ################################################################################
     ##### Evaluate the performance  ######
     ################################################################################
@@ -223,3 +226,4 @@ if __name__=='__main__':
         ax[i//8, i%8].axis('off')
     f.tight_layout()
     plt.show() 
+    '''
